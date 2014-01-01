@@ -1,10 +1,10 @@
 /*
  *  Oval Fanduct 
- *  Copyright (C) 2013  Kit Adams
+ *  Copyright (C) 2014  Kit Adams
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -24,6 +24,12 @@
 *	The intention is that you measure the height from the fan mounting hinge on the extruder
 *	to the bottom of the nozzle (in mm) and set the mountToHotEndBottomZ parameter to that value.
 *   Then set the bedClearanceGap to the distance above the nozzle you wish the lowest part of the duct to be at.
+*
+*	Inspired by http://www.thingiverse.com/thing:63123, which I would have used if I could have tweaked it to fit using 
+*	OpenSCAD.
+*	Uses:
+*	 http://www.thingiverse.com/thing:18273, thanks doommeister, and
+*	 http://svn.clifford.at/openscad/trunk/libraries/shapes.scad, thanks Catarina Mota.
 */
 
 use <fan_holder_v2.scad>
@@ -31,27 +37,39 @@ use <shapes.scad>
 
 $fn=20;
 
-layerHeight = 0.192;  //Layer height used for printing
+//Important: before generating the stl, change this to the layer height you intend to
+//use for printing!
+//layerHeight = 0.1875;  //Layer height used for printing
+//layerHeight = 0.21875;
+layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
+
+outerRadius = 1.6;      //outer corner radius
+wall = 1.6;				 //wall thickness
+
 m3_diameter = 3.6;
 kFanSize = 40;
 
 //Settings for E3D V5 hotend and extruder from http://www.thingiverse.com/thing:119616 
-heaterBlockW = 17;  //18;//first cut
-heaterBlockGap = 6; //Horizontal gap between vented tube and heated block
-//mountToHeatBlockHorizontal = 21.5; Currently unused - adjust fanAngleFromVert instead
+heaterBlockW = 18; 
+heaterBlockGap = 7; //Horizontal gap between vented tube and heated block
+mountToFilamentHoriz = 21.25; 
 fanAngleFromVert = 30;
-mountToHotEndBottomZ = 58;
-bedClearanceGap = 2;  //Bottom of each vented duct is this far above the bottom of the hotend.
+mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
+bedClearanceGap = 7;   //Bottom of each vented duct is this far above the tip of the nozzle.
+					    //Something not quite right with this parameter, since I set it to 7mm but it
+						//ended up being about 4.8 mm
 
-ventedDuctMaxHeight = 18; //16; //first cut
-ventedDuctWidth = 12; //10;//first cut
+//The vented duct reduces in area by changing from oval to round
+ventedDuctMaxHeight = 18; 
+ventedDuctWidth = 12; 
 
+//Mounting parameters
 mountingHingeDia = 8;  
-hingeInsideWidth = 7.2;
-hingeOuterWidth = 4;
-hingeLen = 4.2;
-outerRadius = 1.5; //outer corner radius
-wall = 1.6;
+hingeInsideWidth = 7.2;  //width of the hinge block on the extruder from http://www.thingiverse.com/thing:119616
+hingeOuterWidth = 4;	  //Thickness of each hinge strut on the fan duct
+hingeLen = 4.2;		  //Distance out to the center of the hole
+
+
 
 
 
@@ -94,10 +112,9 @@ translate([-outerRadius,-kFanSize/2,-mountingHingeDia])
 		MountingHinge(mountingHingeDia,hingeLen,hingeOuterWidth);
 	}	
 
-
+//Testing
 //mirror([0,1,0])
 //	ventedTube();
-
 
 //MountingHinge();
 
@@ -125,7 +142,9 @@ module FanSplitter(mountToHotEndBottomZ, fanSizeIn = 30, heaterBlockW = 20, smal
 //Two mirrored version of this attach to the fan mount and duct the air to the level of the heated //block of the hotend.
 fanSize = fanSizeIn-2*outerRadius;
 minAngle = 30;
-xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)-hingeLen-fanSizeIn-smallDuctH/2;
+xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)+
+	sin(fanAngleFromVert)*mountingHingeDia/2-
+	hingeLen-fanSizeIn-smallDuctH/2;
 zTrans = tan(minAngle)*xTrans+fanSize/2+smallDuctH/2; //keep the steepest angle >= minAngle deg from x y plane.
 yTrans = heaterBlockW/2 + heaterBlockGap + smallDuctW/2;
 width = fanSize/2;
@@ -166,9 +185,9 @@ translate([-xTrans,yTrans,zTrans])
 
 }
 
-module ventedTube(height, width, len, fanAngleFromVert)
+module ventedTube(height, width, slotLen, fanAngleFromVert)
 {
-
+len = mountToFilamentHoriz+slotLen/2;  //horizontal center of slot should be at nozzle
 xTrans = len*sin(fanAngleFromVert)
 	-(height-width)/2; //Compensate for blend from oval to circular below, so as to keep bottom to tube horizontal
 
@@ -202,24 +221,23 @@ difference()
 		}
 		rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
 			rotate([0,0,90])  //First, rotate the slot to point down at an angle of 60 from horizontal
-				translate([0,0,height/3])
+				translate([0,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
 					{
 					hull()
 						{
-						cube([slotWidth,2*r2,len-height/2-r2]);
+						cube([slotWidth,2*r2,slotLen-slotWidth]);
 						//Add prism at top to avoid need for support
-						translate([slotWidth/2,0,len-height/2])
+						translate([slotWidth/2,0,slotLen-slotWidth/2])
 							cube([0.5,2*r2,0.5*slotWidth]);
 						//Add prism at bottom for symmetry
-						translate([slotWidth/2,0,-height/3])
+						translate([slotWidth/2,0,-slotWidth/2])
 							cube([0.5,2*r2,0.5*slotWidth]);
 						}
 					}
 	}
-
 }
 
-
+//End cap for the vented ducts
 module endCap(r,wall,fanAngleFromVert)
 {
 len = 1.4*r;
