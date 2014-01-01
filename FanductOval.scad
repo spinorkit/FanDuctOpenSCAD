@@ -18,6 +18,14 @@
  *
 */
 
+/*
+*	Fan duct for active cooling of PLA prints. 
+*	Designed to be printed in ABS without support.
+*	The intention is that you measure the height from the fan mounting hinge on the extruder
+*	to the bottom of the nozzle (in mm) and set the mountToHotEndBottomZ parameter to that value.
+*   Then set the bedClearanceGap to the distance above the nozzle you wish the lowest part of the duct to be at.
+*/
+
 use <fan_holder_v2.scad>
 use <shapes.scad>
 
@@ -26,36 +34,37 @@ $fn=20;
 layerHeight = 0.192;  //Layer height used for printing
 m3_diameter = 3.6;
 kFanSize = 40;
-fanAngleFromVert = 30;
 
 //Settings for E3D V5 hotend and extruder from http://www.thingiverse.com/thing:119616 
 heaterBlockW = 17;  //18;//first cut
-heaterBlockGap = 6; //gap between vented tube and heated block
-mountToHeatBlockHorizontal = 21.5;
+heaterBlockGap = 6; //Horizontal gap between vented tube and heated block
+//mountToHeatBlockHorizontal = 21.5; Currently unused - adjust fanAngleFromVert instead
+fanAngleFromVert = 30;
 mountToHotEndBottomZ = 58;
+bedClearanceGap = 2;  //Bottom of each vented duct is this far above the bottom of the hotend.
 
 ventedDuctMaxHeight = 18; //16; //first cut
 ventedDuctWidth = 12; //10;//first cut
 
-mountingHingeDia = 8;
+mountingHingeDia = 8;  
 hingeInsideWidth = 7.2;
 hingeOuterWidth = 4;
-hingeLen = 8.5;
+hingeLen = 4.2;
 outerRadius = 1.5; //outer corner radius
 wall = 1.6;
 
 
 
-FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,mountToHeatBlockHorizontal,ventedDuctMaxHeight,ventedDuctWidth);
+FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,ventedDuctMaxHeight,ventedDuctWidth /*,mountToHeatBlockHorizontal*/);
 mirror([0,1,0])
-	FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,mountToHeatBlockHorizontal,ventedDuctMaxHeight,ventedDuctWidth);
+	FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,ventedDuctMaxHeight,ventedDuctWidth/*,mountToHeatBlockHorizontal*/);
 
 translate([-outerRadius,-kFanSize/2,-mountingHingeDia])
 	{
 	_fan_mount(
 			fan_size = kFanSize,
 			fan_mounting_pitch = 32,
-			fan_m_hole_dia = 2, //For self-tapping screws
+			fan_m_hole_dia = 2.5, //For self-tapping M3 screws
 			holder_thickness = mountingHingeDia
 		 );
 
@@ -94,7 +103,7 @@ translate([-outerRadius,-kFanSize/2,-mountingHingeDia])
 
 module MountingHinge(dia = 8, lenIn = 12,thickness = 4)
 {
-len = lenIn-dia/2;
+len = lenIn;//-dia/2;
 difference()
 	{
 	union()
@@ -111,12 +120,12 @@ difference()
 }
 
 
-module FanSplitter(mountToHotEndBottomZ, fanSizeIn = 30, heaterBlockW = 20, mountToHeatBlockHorizontal = 10, smallDuctH = 20, smallDuctW = 12)
+module FanSplitter(mountToHotEndBottomZ, fanSizeIn = 30, heaterBlockW = 20, smallDuctH = 20, smallDuctW = 12 /*,mountToHeatBlockHorizontal,*/)
 {
 //Two mirrored version of this attach to the fan mount and duct the air to the level of the heated //block of the hotend.
 fanSize = fanSizeIn-2*outerRadius;
 minAngle = 30;
-xTrans = cos(fanAngleFromVert)*mountToHotEndBottomZ-hingeLen-fanSize/2-smallDuctH/2;
+xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)-hingeLen-fanSizeIn-smallDuctH/2;
 zTrans = tan(minAngle)*xTrans+fanSize/2+smallDuctH/2; //keep the steepest angle >= minAngle deg from x y plane.
 yTrans = heaterBlockW/2 + heaterBlockGap + smallDuctW/2;
 width = fanSize/2;
