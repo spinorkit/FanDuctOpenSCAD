@@ -39,9 +39,9 @@ $fn=20;
 
 //Important: before generating the stl, change this to the layer height you intend to
 //use for printing!
-//layerHeight = 0.1875;  //Layer height used for printing
+layerHeight = 0.1875;  //Layer height used for printing
 //layerHeight = 0.21875;
-layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
+//layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
 wall = 1.6;				 //wall thickness
@@ -60,8 +60,10 @@ bedClearanceGap = 7;   //Bottom of each vented duct is this far above the tip of
 						//ended up being about 4.8 mm
 
 //The vented duct reduces in area by changing from oval to round
-ventedDuctMaxHeight = 18; 
-ventedDuctWidth = 12; 
+ventedDuctMaxHeight = 22; 
+ventedDuctWidth = 14;
+camberAngle = 30;         //Oval part of vented duct is rotated by this amount (i.e. bottoms inwards).
+ 
 
 //Mounting parameters
 mountingHingeDia = 8;  
@@ -89,7 +91,7 @@ translate([-outerRadius,-kFanSize/2,-mountingHingeDia])
 //Airflow splitter
 	translate([0,(kFanSize-wall)/2,0])
 		{
-//Shear the rectangule to get half the splitter
+//Shear the rectangle to get half the splitter
 		multmatrix(m = [ [1, 0, 0, 0],
                  		  [0, 1, wall/(2*mountingHingeDia), 0],
                         [0, 0, 1, 0],
@@ -146,7 +148,7 @@ xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)+
 	sin(fanAngleFromVert)*mountingHingeDia/2-
 	hingeLen-fanSizeIn-smallDuctH/2;
 zTrans = tan(minAngle)*xTrans+fanSize/2+smallDuctH/2; //keep the steepest angle >= minAngle deg from x y plane.
-yTrans = heaterBlockW/2 + heaterBlockGap + smallDuctW/2;
+yTrans = heaterBlockW/2 + heaterBlockGap + max(smallDuctW/2, sin(camberAngle)*smallDuctH/2);
 width = fanSize/2;
 nzSteps = zTrans/layerHeight; 
 di = 1/nzSteps;
@@ -164,16 +166,16 @@ for(i=[0:di:1])
 			minkowski()
 				{
 				cube([(1-i)*height,(1-i)*width,stepZ]);
-				//cylinder(stepZ,max(outerRadius,i*height/2),max(outerRadius,i*width/2));
-				oval(((1-i)*outerRadius+i*height/2),((1-i)*outerRadius+i*width/2),stepZ);
+				rotate([0,0,camberAngle])
+					oval(((1-i)*outerRadius+i*height/2),((1-i)*outerRadius+i*width/2),stepZ);
 				}
 			translate([(1-i)*wall,(1-i)*wall,0])
 			scale([(height-2*wall)/height, (width-2*wall)/width,1])
 				minkowski()
 					{
 					cube([(1-i)*height,(1-i)*width,stepZ]);
-					//cylinder(stepZ,max(outerRadius,i*height/2),max(outerRadius,i*width/2));
-					oval(((1-i)*outerRadius+i*height/2),((1-i)*outerRadius+i*width/2),stepZ);
+					rotate([0,0,camberAngle])
+						oval(((1-i)*outerRadius+i*height/2),((1-i)*outerRadius+i*width/2),stepZ);
 					}
 			}
 		}
@@ -201,7 +203,7 @@ stepZ = zTrans*di;
 r1 = height/2;
 r2 = width/2;
 
-slotWidth = r2*3.1459*45/180; //Corresponds to 45 degrees
+slotWidth = r2*3.1459*70/180; //Corresponds to 45 degrees
 
 difference()
 	{ 
@@ -212,7 +214,8 @@ difference()
 			assign(r1 = (height/2)*(1-i)+i*width/2)
 				{
 				translate([xTrans*i,0,zTrans*i])
-					ovalTube(stepZ,r1,r2,wall);
+					rotate([0,0,-camberAngle])
+						ovalTube(stepZ,r1,r2,wall);
 				}
 			}
 		//End cap
@@ -220,8 +223,8 @@ difference()
 			endCap(r2,wall,fanAngleFromVert/2);
 		}
 		rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
-			rotate([0,0,90])  //First, rotate the slot to point down at an angle of 90 from horizontal
-				translate([0,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
+			rotate([0,0,90-camberAngle])  //First, rotate the slot to point down at an angle of 90 from horizontal
+				translate([-slotWidth/2,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
 					{
 					hull()
 						{
