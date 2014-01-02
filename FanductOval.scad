@@ -139,7 +139,7 @@ difference()
 
 module FanSplitter(mountToHotEndBottomZ, fanSizeIn = 30, heaterBlockW = 20, smallDuctH = 20, smallDuctW = 12 /*,mountToHeatBlockHorizontal,*/)
 {
-//Two mirrored version of this attach to the fan mount and duct the air to the level of the heated //block of the hotend.
+//Two mirrored versions of this attach to the fan mount and duct the air to the level of the heated block of the hotend.
 fanSize = fanSizeIn-2*outerRadius;
 minAngle = 30;
 xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)+
@@ -220,7 +220,7 @@ difference()
 			endCap(r2,wall,fanAngleFromVert/2);
 		}
 		rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
-			rotate([0,0,90])  //First, rotate the slot to point down at an angle of 60 from horizontal
+			rotate([0,0,90])  //First, rotate the slot to point down at an angle of 90 from horizontal
 				translate([0,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
 					{
 					hull()
