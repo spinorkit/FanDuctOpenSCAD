@@ -39,9 +39,9 @@ $fn=20;
 
 //Important: before generating the stl, change this to the layer height you intend to
 //use for printing!
-layerHeight = 0.1875;  //Layer height used for printing
+//layerHeight = 0.1875;  //Layer height used for printing
 //layerHeight = 0.21875;
-//layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
+layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
 wall = 1.6;				 //wall thickness
@@ -62,7 +62,8 @@ bedClearanceGap = 7;   //Bottom of each vented duct is this far above the tip of
 //The vented duct reduces in area by changing from oval to round
 ventedDuctMaxHeight = 22; 
 ventedDuctWidth = 14;
-camberAngle = 30;         //Oval part of vented duct is rotated by this amount (i.e. bottoms inwards).
+slotAngleFromVertical = 45;
+camberAngle = 60;         //Oval part of vented duct is rotated by this amount (i.e. bottoms inwards).
  
 
 //Mounting parameters
@@ -146,7 +147,7 @@ fanSize = fanSizeIn-2*outerRadius;
 minAngle = 30;
 xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)+
 	sin(fanAngleFromVert)*mountingHingeDia/2-
-	hingeLen-fanSizeIn-smallDuctH/2;
+	hingeLen-fanSizeIn-max(cos(camberAngle)*smallDuctH/2, smallDuctW/2);
 zTrans = tan(minAngle)*xTrans+fanSize/2+smallDuctH/2; //keep the steepest angle >= minAngle deg from x y plane.
 yTrans = heaterBlockW/2 + heaterBlockGap + max(smallDuctW/2, sin(camberAngle)*smallDuctH/2);
 width = fanSize/2;
@@ -191,9 +192,11 @@ module ventedTube(height, width, slotLen, fanAngleFromVert)
 {
 len = mountToFilamentHoriz+slotLen/2;  //horizontal center of slot should be at nozzle
 xTrans = len*sin(fanAngleFromVert)
-	-(height-width)/2; //Compensate for blend from oval to circular below, so as to keep bottom to tube horizontal
+	-cos(camberAngle)*(height-width)/2; //Compensate for blend from oval to circular below, so as to keep bottom to tube horizontal
 
-slotAngle = fanAngleFromVert-atan(0.5*(height-width)/len);
+yTrans = sin(camberAngle)*(height-width)/2;
+
+//slotAngle = fanAngleFromVert-atan(0.5*(height-width)/len);
 
 zTrans = len*cos(fanAngleFromVert);
 nzSteps = zTrans/layerHeight; 
@@ -205,7 +208,7 @@ r2 = width/2;
 
 slotWidth = r2*3.1459*70/180; //Corresponds to 45 degrees
 
-difference()
+difference() //Comment this line to see the slot airflow direction
 	{ 
 	union()
 		{
@@ -213,17 +216,23 @@ difference()
 			{//Blend from oval to circular to reduce volume in a linear fashion
 			assign(r1 = (height/2)*(1-i)+i*width/2)
 				{
-				translate([xTrans*i,0,zTrans*i])
+				translate([xTrans*i,yTrans*i,zTrans*i])
 					rotate([0,0,-camberAngle])
 						ovalTube(stepZ,r1,r2,wall);
 				}
 			}
 		//End cap
-		translate([xTrans,0,zTrans])
+		translate([xTrans,yTrans,zTrans])
 			endCap(r2,wall,fanAngleFromVert/2);
 		}
-		rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
-			rotate([0,0,90-camberAngle])  //First, rotate the slot to point down at an angle of 90 from horizontal
+		//rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
+		multmatrix(m = [ [1, 0, xTrans/len, 0],
+                 		  [0, 1, (yTrans)/len, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0,  1]
+                        ])
+
+			rotate([0,0,slotAngleFromVertical])  //First, rotate the slot to point down at an angle of 90 from horizontal
 				translate([-slotWidth/2,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
 					{
 					hull()
