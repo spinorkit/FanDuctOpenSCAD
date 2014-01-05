@@ -39,31 +39,34 @@ $fn=20;
 
 //Important: before generating the stl, change this to the layer height you intend to
 //use for printing!
-//layerHeight = 0.1875;  //Layer height used for printing
-//layerHeight = 0.21875;
-layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
+//layerHeight = 0.1875;  	//Layer height used for printing - Cura failed on this height - 
+							//tried to block of one duct in mid-air, Kisslicer OK.
+
+layerHeight = 0.25;    	//Layer height used for printing - Cura OK with this.
+//layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
-wall = 1.6;				 //wall thickness
+wall = 1.5;				 //wall thickness
 
 m3_diameter = 3.6;
 kFanSize = 40;
 
 //Settings for E3D V5 hotend and extruder from http://www.thingiverse.com/thing:119616 
-heaterBlockW = 18; 
-heaterBlockGap = 7; //Horizontal gap between vented tube and heated block
+heaterBlockW = 18;
+nozzleOffsetFromBlockCenter = 5; //+ve if towards mount 
+heaterBlockGap = 6; //Horizontal gap between vented tube and heated block - 7 ended up being 6 mm
 mountToFilamentHoriz = 21.25; 
 fanAngleFromVert = 30;
 mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
-bedClearanceGap = 7;   //Bottom of each vented duct is this far above the tip of the nozzle.
+bedClearanceGap = 10;   //Bottom of each vented duct is this far above the tip of the nozzle.
 					    //Something not quite right with this parameter, since I set it to 7mm but it
-						//ended up being about 4.8 mm
+						//ended up being about 4 mm
 
 //The vented duct reduces in area by changing from oval to round
-ventedDuctMaxHeight = 22; 
+ventedDuctMaxHeight = 25; //22; 
 ventedDuctWidth = 14;
-slotAngleFromVertical = 45;
-camberAngle = 60;         //Oval part of vented duct is rotated by this amount (i.e. bottoms inwards).
+slotAngleFromVertical = 60;
+camberAngle = 60;         //Oval part of vented duct is rotated from vertical by this amount (i.e. bottoms inwards).
  
 
 //Mounting parameters
@@ -183,7 +186,7 @@ for(i=[0:di:1])
 	}
 translate([-xTrans,yTrans,zTrans])
 	mirror([0,1,0])
-		ventedTube(smallDuctH,smallDuctW,heaterBlockW+heaterBlockGap*2,fanAngleFromVert);
+		ventedTube(smallDuctH,smallDuctW,0.8*(heaterBlockW+heaterBlockGap*2),fanAngleFromVert);
 }
 
 }
@@ -206,7 +209,7 @@ stepZ = zTrans*di;
 r1 = height/2;
 r2 = width/2;
 
-slotWidth = r2*3.1459*70/180; //Corresponds to 45 degrees
+slotWidth = r2*3.1459*45/180; //Corresponds to 45 degrees
 
 difference() //Comment this line to see the slot airflow direction
 	{ 
@@ -232,8 +235,8 @@ difference() //Comment this line to see the slot airflow direction
                         [0, 0, 0,  1]
                         ])
 
-			rotate([0,0,slotAngleFromVertical])  //First, rotate the slot to point down at an angle of 90 from horizontal
-				translate([-slotWidth/2,0,mountToFilamentHoriz-slotLen/2])  //horizontal center of slot should be at nozzle])
+			rotate([0,0,90-slotAngleFromVertical])  //First, rotate the slot to point down at an angle of 90 from horizontal
+				translate([-slotWidth/2,0,mountToFilamentHoriz-slotLen/2-nozzleOffsetFromBlockCenter])  //horizontal center of slot should be at nozzle])
 					{
 					hull()
 						{
