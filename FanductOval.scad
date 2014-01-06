@@ -43,7 +43,7 @@ $fn=20;
 							//tried to block of one duct in mid-air, Kisslicer OK.
 
 layerHeight = 0.25;    	//Layer height used for printing - Cura OK with this.
-//layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
+layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
 wall = 1.5;				 //wall thickness
@@ -67,7 +67,7 @@ ventedDuctMaxHeight = 25; //22;
 ventedDuctWidth = 14;
 slotAngleFromVertical = 60;
 camberAngle = 60;         //Oval part of vented duct is rotated from vertical by this amount (i.e. bottoms inwards).
- 
+toeInAngle = 10;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
 
 //Mounting parameters
 mountingHingeDia = 8;  
@@ -148,11 +148,14 @@ module FanSplitter(mountToHotEndBottomZ, fanSizeIn = 30, heaterBlockW = 20, smal
 //Two mirrored versions of this attach to the fan mount and duct the air to the level of the heated block of the hotend.
 fanSize = fanSizeIn-2*outerRadius;
 minAngle = 30;
+ventedDuctsSeparation = heaterBlockW + 2*heaterBlockGap;
+ventedDuctsSeparationMax = ventedDuctsSeparation + sin(toeInAngle)*ventedDuctsSeparation;
+
 xTrans = cos(fanAngleFromVert)*(mountToHotEndBottomZ-bedClearanceGap)+
 	sin(fanAngleFromVert)*mountingHingeDia/2-
 	hingeLen-fanSizeIn-max(cos(camberAngle)*smallDuctH/2, smallDuctW/2);
 zTrans = tan(minAngle)*xTrans+fanSize/2+smallDuctH/2; //keep the steepest angle >= minAngle deg from x y plane.
-yTrans = heaterBlockW/2 + heaterBlockGap + max(smallDuctW/2, sin(camberAngle)*smallDuctH/2);
+yTrans = ventedDuctsSeparationMax/2 + max(smallDuctW/2, sin(camberAngle)*smallDuctH/2);
 width = fanSize/2;
 nzSteps = zTrans/layerHeight; 
 di = 1/nzSteps;
@@ -186,7 +189,7 @@ for(i=[0:di:1])
 	}
 translate([-xTrans,yTrans,zTrans])
 	mirror([0,1,0])
-		ventedTube(smallDuctH,smallDuctW,0.8*(heaterBlockW+heaterBlockGap*2),fanAngleFromVert);
+		ventedTube(smallDuctH,smallDuctW,0.8*(ventedDuctsSeparation),fanAngleFromVert);
 }
 
 }
@@ -197,7 +200,7 @@ len = mountToFilamentHoriz+slotLen/2;  //horizontal center of slot should be at 
 xTrans = len*sin(fanAngleFromVert)
 	-cos(camberAngle)*(height-width)/2; //Compensate for blend from oval to circular below, so as to keep bottom to tube horizontal
 
-yTrans = sin(camberAngle)*(height-width)/2;
+yTrans = sin(camberAngle)*(height-width)/2+sin(toeInAngle)*len;
 
 //slotAngle = fanAngleFromVert-atan(0.5*(height-width)/len);
 
