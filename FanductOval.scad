@@ -34,6 +34,7 @@
 
 use <fan_holder_v2.scad>
 use <shapes.scad>
+use <ruler.scad>
 
 $fn=20;
 
@@ -57,17 +58,17 @@ nozzleOffsetFromBlockCenter = 5; //+ve if towards mount
 heaterBlockGap = 6; //Horizontal gap between vented tube and heated block - 7 ended up being 6 mm
 mountToFilamentHoriz = 21.25; 
 fanAngleFromVert = 30;
-mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
+mountToHotEndBottomZ = 45;//for J-head//65; for E3Dv5; //vertical distance from center of mounting hinge to tip of nozzle.
 bedClearanceGap = 10;   //Bottom of each vented duct is this far above the tip of the nozzle.
 					    //Something not quite right with this parameter, since I set it to 7mm but it
 						//ended up being about 4 mm
 
 //The vented duct reduces in area by changing from oval to round
-ventedDuctMaxHeight = 25; //22; 
-ventedDuctWidth = 14;
-slotAngleFromVertical = 60;
+ventedDuctMaxHeight = 22;//25; //22; 
+ventedDuctWidth = 18;//14;
+slotAngleFromVertical = 50;//60;
 camberAngle = 60;         //Oval part of vented duct is rotated from vertical by this amount (i.e. bottoms inwards).
-toeInAngle = 10;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
+toeInAngle = 12;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
 
 //Mounting parameters
 mountingHingeDia = 8;  
@@ -76,8 +77,9 @@ hingeOuterWidth = 4;	  //Thickness of each hinge strut on the fan duct
 hingeLen = 4.2;		  //Distance out to the center of the hole
 
 
+rulery = 0;//kFanSize/2;//-21;
 
-
+hingePos = [kFanSize+hingeLen-m3_diameter/2,rulery,-mountingHingeDia/2];
 
 FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,ventedDuctMaxHeight,ventedDuctWidth /*,mountToHeatBlockHorizontal*/);
 mirror([0,1,0])
@@ -191,7 +193,8 @@ translate([-xTrans,yTrans,zTrans])
 	mirror([0,1,0])
 		ventedTube(smallDuctH,smallDuctW,0.8*(ventedDuctsSeparation),fanAngleFromVert);
 }
-
+//# translate( [x, y, z] ) rotate( [x, y, z] ) ruler(ruler_length);
+#cylinder_ep(hingePos,[-(xTrans+smallDuctH/2),rulery,zTrans]);
 }
 
 module ventedTube(height, width, slotLen, fanAngleFromVert)
@@ -212,7 +215,8 @@ stepZ = zTrans*di;
 r1 = height/2;
 r2 = width/2;
 
-slotWidth = r2*3.1459*45/180; //Corresponds to 45 degrees
+//slotWidth = r2*3.1459*45/180; //Corresponds to 45 degrees
+slotWidth = r2*3.1459*50/180; //Corresponds to 45 degrees
 
 difference() //Comment this line to see the slot airflow direction
 	{ 
