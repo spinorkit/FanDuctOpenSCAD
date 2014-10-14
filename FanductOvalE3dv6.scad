@@ -42,10 +42,8 @@ pi = 3.1415926535897932384626433832795;
 
 //Important: before generating the stl, change this to the layer height you intend to
 //use for printing!
-//layerHeight = 0.1875;  	//Layer height used for printing - Cura failed on this height - 
-							//tried to block of one duct in mid-air, Kisslicer OK.
 
-layerHeight = 0.248;    	//Layer height used for printing - Cura OK with this.
+layerHeight = 0.2;    	//Layer height used for printing - Cura OK with this.
 //layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
@@ -58,17 +56,23 @@ kFanSize = 40;
 heaterBlockW = 18;
 nozzleOffsetFromBlockCenter = 2; //+ve if towards mount 
 heaterBlockGap = 6;//6; //Horizontal gap between vented tube and heated block - 7 ended up being 6 mm
-mountToFilamentHoriz = 21.25; 
-fanAngleFromVert = 30;
-mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
+mountToFilamentHoriz = 25; //21.25; 
+fanAngleFromVert = 30;//+5;
+
+//For E3D v6
+mountToHotEndBottomZ = 57.5; //vertical distance from center of mounting hinge to tip of nozzl
+
+//For E3Dv5
+//mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
+
 bedClearanceGap = 10;   //Bottom of each vented duct is this far above the tip of the nozzle.
 					    //Something not quite right with this parameter, since I set it to 7mm but it
 						//ended up being about 4 mm
 
 //The vented duct reduces in area by changing from oval to round
 ventedDuctMaxHeight = 22;
-ventedDuctWidth = 17;
-endCapDia = 12;
+ventedDuctWidth = 16;
+endCapDia = 14;
 slotAngleFromVertical = 45;//60;
 slotWidthDegrees = 60;
 ///End settings
@@ -95,7 +99,7 @@ slotWidthDegrees = 60;
 slotMaxWidthFrac = 0.2;
 
 camberAngle = 60;         //Oval part of vented duct is rotated from vertical by this amount (i.e. bottoms inwards).
-toeInAngle = 20;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
+toeInAngle = 12;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
 
 //Mounting parameters
 mountingHingeDia = 8;  
@@ -196,7 +200,7 @@ for(i=[0:di:1])
 	assign(width = fanSize/2*(1-i)+i*smallDuctW, height = fanSize*(1-i)+i*smallDuctH )
 		{
 	
-		translate([-xTrans*pow(i,5),yTrans*((1-i)*pow(i,1.05)+i*pow(i,0.5)),zTrans*i])
+		translate([-xTrans*pow(i,2/*5*/),yTrans*((1-i)*pow(i,1.05)+i*pow(i,0.5)),zTrans*i])
 		difference()
 			{
 			minkowski()
