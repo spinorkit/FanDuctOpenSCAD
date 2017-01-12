@@ -43,7 +43,7 @@ pi = 3.1415926535897932384626433832795;
 //Important: before generating the stl, change this to the layer height you intend to
 //use for printing!
 
-layerHeight = 0.2;    	//Layer height used for printing - Cura OK with this.
+layerHeight = 0.25;    	//Layer height used for printing - Cura OK with this.
 //layerHeight = 1;       //Use this (or 2) to speed OpenSCAD up while trying things out
 
 outerRadius = 1.6;      //outer corner radius
@@ -55,17 +55,17 @@ kFanSize = 40;
 /////Settings for E3D V5 hotend and extruder from http://www.thingiverse.com/thing:119616 
 heaterBlockW = 18;
 nozzleOffsetFromBlockCenter = 2; //+ve if towards mount 
-heaterBlockGap = 6;//6; //Horizontal gap between vented tube and heated block - 7 ended up being 6 mm
-mountToFilamentHoriz = 25; //21.25; 
+heaterBlockGap = 4+3;//6;//6; //Horizontal gap between vented tube and heated block - 7 ended up being 6 mm
+mountToFilamentHoriz = 25-3; //21.25; 
 fanAngleFromVert = 30;//+5;
 
 //For E3D v6
-mountToHotEndBottomZ = 57.5; //vertical distance from center of mounting hinge to tip of nozzl
+mountToHotEndBottomZ = 57.5; //vertical distance from center of mounting hinge to tip of nozzle
 
 //For E3Dv5
 //mountToHotEndBottomZ = 65; //vertical distance from center of mounting hinge to tip of nozzle.
 
-bedClearanceGap = 10;   //Bottom of each vented duct is this far above the tip of the nozzle.
+bedClearanceGap = 10+2.5;   //Bottom of each vented duct is this far above the tip of the nozzle.
 					    //Something not quite right with this parameter, since I set it to 7mm but it
 						//ended up being about 4 mm
 
@@ -73,8 +73,10 @@ bedClearanceGap = 10;   //Bottom of each vented duct is this far above the tip o
 ventedDuctMaxHeight = 22;
 ventedDuctWidth = 16;
 endCapDia = 14;
-slotAngleFromVertical = 45;//60;
+slotAngleFromVertical = 35;//60;
 slotWidthDegrees = 60;
+
+
 ///End settings
 
 ///////Settings for J-Head V5 hotend and extruder from http://www.thingiverse.com/thing:119616 
@@ -99,7 +101,7 @@ slotWidthDegrees = 60;
 slotMaxWidthFrac = 0.2;
 
 camberAngle = 60;         //Oval part of vented duct is rotated from vertical by this amount (i.e. bottoms inwards).
-toeInAngle = 12;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
+toeInAngle = 12+15;          //Increase this to compensate for the air tending to blow forwards more than backwards. 
 
 //Mounting parameters
 mountingHingeDia = 8;  
@@ -111,6 +113,11 @@ hingeLen = 4.2;		  //Distance out to the center of the hole
 rulery = 0;//kFanSize/2;//-21;
 
 hingePos = [kFanSize+hingeLen-m3_diameter/2,rulery,-mountingHingeDia/2];
+
+FanDuct();
+
+module FanDuct()
+{
 
 FanSplitter(mountToHotEndBottomZ,kFanSize,heaterBlockW,ventedDuctMaxHeight,ventedDuctWidth /*,mountToHeatBlockHorizontal*/);
 mirror([0,1,0])
@@ -149,7 +156,9 @@ translate([-outerRadius,-kFanSize/2,-mountingHingeDia])
 		MountingHinge(mountingHingeDia,hingeLen,hingeOuterWidth);
 	translate([kFanSize,kFanSize/2-hingeInsideWidth/2-hingeOuterWidth,0])
 		MountingHinge(mountingHingeDia,hingeLen,hingeOuterWidth);
-	}	
+	}
+//cylinder(
+}	
 
 //Testing
 //mirror([0,1,0])
@@ -257,17 +266,14 @@ difference() //Comment this line to see the slot airflow direction
 			assign(r1 = (height/2)*(1-i)+i*endCapDia/2,r2 = (width/2)*(1-i)+i*endCapDia/2)
 				{
 				//translate([xTrans*i,yTrans*(1-cos(i*90)),zTrans*i])
-				translate([xTrans*i,yTrans*pow(i,2),zTrans*i])
+				translate([xTrans*i,yTrans*pow(i,2.5),zTrans*i])
 					rotate([0,0,-camberAngle])
 						ovalTube(stepZ,r1,r2,wall);
 				}
 			}
-		//End cap
-		translate([xTrans,yTrans,zTrans])
-			endCap(endCapDia/2,wall,fanAngleFromVert/2);
 		}
 		//rotate([0,slotAngle,0]) //Second, rotate the slot to be parallel to the ventedTube
-		multmatrix(m = [ [1, 0, xTrans/len, 0],
+		#multmatrix(m = [ [1, 0, xTrans/len, 0],
                  		  [0, 1, (yTrans)/len, 0],
                         [0, 0, 1, 0],
                         [0, 0, 0,  1]
@@ -284,11 +290,14 @@ difference() //Comment this line to see the slot airflow direction
 						translate([slotWidth/2,0,slotLen-slotWidth/2])
 							cube([0.5,2*r2,0.5*slotWidth]);
 						//Add prism at bottom for symmetry
-						translate([slotWidth/2,0,-slotWidth/2])
-							cube([0.5,2*r2,0.5*slotWidth]);
+						translate([slotWidth/2,0,-2.5*slotWidth/1])
+							cube([0.5,2*r2,0.8*slotWidth]);
 						}
 					}
 	}
+//End cap
+translate([xTrans,yTrans,zTrans])
+   endCap(endCapDia/2,wall,fanAngleFromVert/2);
 }
 
 //End cap for the vented ducts
@@ -301,14 +310,17 @@ nzSteps = zTrans/layerHeight;
 di = 1/nzSteps;
 stepZ = zTrans*di;
 r1 = r-wall;
-for(i = [0:di:1])
-	{
-	assign(r1 = (r-wall)*(1-i)+wall)
-		{
-		translate([xTrans*i,0,zTrans*i])
-			ovalTube(stepZ,r1,r1,wall);
-		}
-	}
+//for(i = [0:di:1])
+//	{
+//	assign(r1 = (r-wall)*(1-i)+wall)
+//		{
+//		translate([xTrans*i,0,zTrans*i])
+//			ovalTube(stepZ,r1,r1,wall);
+//		}
+//	}
+//ovalTube(3*stepZ,r1,r1,wall);
+translate([xTrans*0,0,zTrans*0])
+   cylinder(r = r, h=3*stepZ);
 }
 
 module coneTube(h, r1, r2, wall, center = false)
